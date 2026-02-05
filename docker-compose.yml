@@ -1,4 +1,14 @@
 services:
+  db:
+    image: postgres:15-alpine
+    environment:
+      - POSTGRES_USER=${DB_USER:-engincan}
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-astakip123}
+      - POSTGRES_DB=${DB_NAME:-enverer_db}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: always
+
   backend:
     build:
       context: ./backend
@@ -6,12 +16,14 @@ services:
     ports:
       - "3000:3000"
     environment:
-      - DB_HOST=${DB_HOST}
-      - DB_PORT=${DB_PORT}
-      - DB_USER=${DB_USER}
-      - DB_PASSWORD=${DB_PASSWORD}
-      - DB_NAME=${DB_NAME}
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=${DB_USER:-engincan}
+      - DB_PASSWORD=${DB_PASSWORD:-astakip123}
+      - DB_NAME=${DB_NAME:-enverer_db}
       - PORT=3000
+    depends_on:
+      - db
     volumes:
       - ./backend/uploads:/app/uploads
     restart: always
@@ -26,3 +38,6 @@ services:
     ports:
       - "80:80"
     restart: always
+
+volumes:
+  postgres_data:
