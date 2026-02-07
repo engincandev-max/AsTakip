@@ -12,6 +12,7 @@ const CustomerDetail: React.FC = () => {
     const [customer, setCustomer] = useState<Customer | null>(null);
     const [editData, setEditData] = useState<{ name?: string; phoneNumber?: string; constructionType?: string; stage?: string; description?: string; address?: string }>({});
     const [loading, setLoading] = useState(true);
+    const [isEditing, setIsEditing] = useState(false);
     const [updating, setUpdating] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
@@ -47,6 +48,7 @@ const CustomerDetail: React.FC = () => {
             setUpdating(true);
             await customerService.update(id, editData);
             await loadCustomer(id);
+            setIsEditing(false);
             alert('Müşteri bilgileri güncellendi.');
         } catch (error) {
             console.error('Failed to update customer info:', error);
@@ -146,94 +148,128 @@ const CustomerDetail: React.FC = () => {
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
                         <div className="flex justify-between items-center border-b border-gray-50 pb-2">
                             <h2 className="font-semibold text-gray-900">Bilgiler</h2>
-                            {updating && <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />}
+                            <div className="flex items-center gap-2">
+                                {updating && <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />}
+                                <button
+                                    onClick={() => setIsEditing(!isEditing)}
+                                    className="text-xs font-semibold text-indigo-600 hover:text-indigo-800 bg-indigo-50 px-2 py-1 rounded"
+                                >
+                                    {isEditing ? 'İptal' : 'Düzenle'}
+                                </button>
+                            </div>
                         </div>
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-sm">
                                 <div className="col-span-2">
                                     <label className="block text-gray-500 mb-1">Müşteri Adı</label>
-                                    <input
-                                        type="text"
-                                        value={editData.name || ''}
-                                        onChange={(e) => handleEditChange('name', e.target.value)}
-                                        disabled={updating}
-                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900 font-medium"
-                                    />
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            value={editData.name || ''}
+                                            onChange={(e) => handleEditChange('name', e.target.value)}
+                                            disabled={updating}
+                                            className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900 font-medium"
+                                        />
+                                    ) : (
+                                        <span className="text-gray-900 font-semibold">{customer.name}</span>
+                                    )}
                                 </div>
                                 <div className="col-span-2">
                                     <label className="block text-gray-500 mb-1">Telefon</label>
-                                    <input
-                                        type="text"
-                                        value={editData.phoneNumber || ''}
-                                        onChange={(e) => handleEditChange('phoneNumber', e.target.value)}
-                                        disabled={updating}
-                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
-                                    />
+                                    {isEditing ? (
+                                        <input
+                                            type="text"
+                                            value={editData.phoneNumber || ''}
+                                            onChange={(e) => handleEditChange('phoneNumber', e.target.value)}
+                                            disabled={updating}
+                                            className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
+                                        />
+                                    ) : (
+                                        <span className="text-gray-900">{customer.phoneNumber}</span>
+                                    )}
                                 </div>
                                 <div>
                                     <span className="block text-gray-500 mb-1">İnşaat Türü</span>
-                                    <select
-                                        value={editData.constructionType || ''}
-                                        onChange={(e) => handleEditChange('constructionType', e.target.value)}
-                                        disabled={updating}
-                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"
-                                    >
-                                        <option value="">Seçiniz</option>
-                                        <option value="Müşteri">Müşteri</option>
-                                        <option value="Konut">Konut</option>
-                                        <option value="Ticari">Ticari</option>
-                                        <option value="Devlet">Devlet</option>
-                                        <option value="Diğer">Diğer</option>
-                                    </select>
+                                    {isEditing ? (
+                                        <select
+                                            value={editData.constructionType || ''}
+                                            onChange={(e) => handleEditChange('constructionType', e.target.value)}
+                                            disabled={updating}
+                                            className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            <option value="Müşteri">Müşteri</option>
+                                            <option value="Konut">Konut</option>
+                                            <option value="Ticari">Ticari</option>
+                                            <option value="Devlet">Devlet</option>
+                                            <option value="Diğer">Diğer</option>
+                                        </select>
+                                    ) : (
+                                        <span className="text-gray-900">{customer.constructionType || '-'}</span>
+                                    )}
                                 </div>
                                 <div>
                                     <span className="block text-gray-500 mb-1">Aşama</span>
-                                    <select
-                                        value={editData.stage || ''}
-                                        onChange={(e) => handleEditChange('stage', e.target.value)}
-                                        disabled={updating}
-                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-indigo-600"
-                                    >
-                                        <option value="">Seçiniz</option>
-                                        <option value="Müşteri">Müşteri</option>
-                                        <option value="Proje">Proje</option>
-                                        <option value="Temel">Temel</option>
-                                        <option value="Kaba İnşaat">Kaba İnşaat</option>
-                                        <option value="İnce İşçilik">İnce İşçilik</option>
-                                        <option value="Tamamlandı">Tamamlandı</option>
-                                    </select>
+                                    {isEditing ? (
+                                        <select
+                                            value={editData.stage || ''}
+                                            onChange={(e) => handleEditChange('stage', e.target.value)}
+                                            disabled={updating}
+                                            className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-indigo-600"
+                                        >
+                                            <option value="">Seçiniz</option>
+                                            <option value="Müşteri">Müşteri</option>
+                                            <option value="Proje">Proje</option>
+                                            <option value="Temel">Temel</option>
+                                            <option value="Kaba İnşaat">Kaba İnşaat</option>
+                                            <option value="İnce İşçilik">İnce İşçilik</option>
+                                            <option value="Tamamlandı">Tamamlandı</option>
+                                        </select>
+                                    ) : (
+                                        <span className="font-medium text-indigo-600">{customer.stage || '-'}</span>
+                                    )}
                                 </div>
                                 <div className="col-span-2">
                                     <span className="block text-gray-500 mb-1">Adres</span>
-                                    <textarea
-                                        value={editData.address || ''}
-                                        onChange={(e) => handleEditChange('address', e.target.value)}
-                                        disabled={updating}
-                                        rows={2}
-                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
-                                        placeholder="Adres bilgisi..."
-                                    />
+                                    {isEditing ? (
+                                        <textarea
+                                            value={editData.address || ''}
+                                            onChange={(e) => handleEditChange('address', e.target.value)}
+                                            disabled={updating}
+                                            rows={2}
+                                            className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
+                                            placeholder="Adres bilgisi..."
+                                        />
+                                    ) : (
+                                        <span className="text-gray-900">{customer.address || '-'}</span>
+                                    )}
                                 </div>
                                 <div className="col-span-2">
                                     <span className="block text-gray-500 mb-1">Açıklama</span>
-                                    <textarea
-                                        value={editData.description || ''}
-                                        onChange={(e) => handleEditChange('description', e.target.value)}
-                                        disabled={updating}
-                                        rows={2}
-                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
-                                        placeholder="Notlar veya açıklama..."
-                                    />
+                                    {isEditing ? (
+                                        <textarea
+                                            value={editData.description || ''}
+                                            onChange={(e) => handleEditChange('description', e.target.value)}
+                                            disabled={updating}
+                                            rows={2}
+                                            className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
+                                            placeholder="Notlar veya açıklama..."
+                                        />
+                                    ) : (
+                                        <p className="text-gray-900 italic text-xs">{customer.description || '-'}</p>
+                                    )}
                                 </div>
                             </div>
 
-                            <button
-                                onClick={handleSaveInfo}
-                                disabled={updating}
-                                className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
-                            >
-                                {updating ? 'Kaydediliyor...' : 'Bilgileri Kaydet'}
-                            </button>
+                            {isEditing && (
+                                <button
+                                    onClick={handleSaveInfo}
+                                    disabled={updating}
+                                    className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                                >
+                                    {updating ? 'Kaydediliyor...' : 'Bilgileri Kaydet'}
+                                </button>
+                            )}
                         </div>
                     </div>
 

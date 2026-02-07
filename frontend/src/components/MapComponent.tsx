@@ -8,8 +8,8 @@ const containerStyle = {
 };
 
 const defaultCenter = {
-    lat: 41.0082, // Istanbul
-    lng: 28.9784,
+    lat: 36.8841, // Antalya
+    lng: 30.7056,
 };
 
 interface MapComponentProps {
