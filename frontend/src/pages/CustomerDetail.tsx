@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
-import clsx from 'clsx';
 import { customerService, visitService, attachmentService } from '../services/api';
 import type { Customer, CreateVisitDto, Attachment } from '../types';
 import MapComponent from '../components/MapComponent';
@@ -11,7 +10,9 @@ const CustomerDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [customer, setCustomer] = useState<Customer | null>(null);
+    const [editData, setEditData] = useState<{ constructionType?: string; stage?: string; description?: string; address?: string }>({});
     const [loading, setLoading] = useState(true);
+    const [updating, setUpdating] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
 
@@ -23,6 +24,12 @@ const CustomerDetail: React.FC = () => {
         try {
             const data = await customerService.getOne(customerId);
             setCustomer(data);
+            setEditData({
+                constructionType: data.constructionType,
+                stage: data.stage,
+                description: data.description,
+                address: data.address
+            });
         } catch (error) {
             console.error('Failed to load customer:', error);
             alert('Müşteri bulunamadı.');
@@ -30,6 +37,25 @@ const CustomerDetail: React.FC = () => {
         } finally {
             setLoading(false);
         }
+    };
+
+    const handleSaveInfo = async () => {
+        if (!id) return;
+        try {
+            setUpdating(true);
+            await customerService.update(id, editData);
+            await loadCustomer(id);
+            alert('Müşteri bilgileri güncellendi.');
+        } catch (error) {
+            console.error('Failed to update customer info:', error);
+            alert('Güncelleme sırasında hata oluştu.');
+        } finally {
+            setUpdating(false);
+        }
+    };
+
+    const handleEditChange = (field: string, value: string) => {
+        setEditData(prev => ({ ...prev, [field]: value }));
     };
 
     const handleDelete = async () => {
@@ -116,26 +142,76 @@ const CustomerDetail: React.FC = () => {
                 {/* Left Column: Details & Documents */}
                 <div className="space-y-6">
                     <div className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm space-y-4">
-                        <h2 className="font-semibold text-gray-900 border-b border-gray-50 pb-2">Bilgiler</h2>
-                        <div className="grid grid-cols-2 gap-4 text-sm">
-                            <div>
-                                <span className="block text-gray-500 mb-1">İnşaat Türü</span>
-                                <span className="font-medium text-gray-900">{customer.constructionType || '-'}</span>
+                        <div className="flex justify-between items-center border-b border-gray-50 pb-2">
+                            <h2 className="font-semibold text-gray-900">Bilgiler</h2>
+                            {updating && <Loader2 className="w-4 h-4 animate-spin text-indigo-600" />}
+                        </div>
+                        <div className="space-y-4">
+                            <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div>
+                                    <span className="block text-gray-500 mb-1">İnşaat Türü</span>
+                                    <select
+                                        value={editData.constructionType || ''}
+                                        onChange={(e) => handleEditChange('constructionType', e.target.value)}
+                                        disabled={updating}
+                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500"
+                                    >
+                                        <option value="">Seçiniz</option>
+                                        <option value="Müşteri">Müşteri</option>
+                                        <option value="Konut">Konut</option>
+                                        <option value="Ticari">Ticari</option>
+                                        <option value="Devlet">Devlet</option>
+                                        <option value="Diğer">Diğer</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <span className="block text-gray-500 mb-1">Aşama</span>
+                                    <select
+                                        value={editData.stage || ''}
+                                        onChange={(e) => handleEditChange('stage', e.target.value)}
+                                        disabled={updating}
+                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 font-medium text-indigo-600"
+                                    >
+                                        <option value="">Seçiniz</option>
+                                        <option value="Müşteri">Müşteri</option>
+                                        <option value="Proje">Proje</option>
+                                        <option value="Temel">Temel</option>
+                                        <option value="Kaba İnşaat">Kaba İnşaat</option>
+                                        <option value="İnce İşçilik">İnce İşçilik</option>
+                                        <option value="Tamamlandı">Tamamlandı</option>
+                                    </select>
+                                </div>
+                                <div className="col-span-2">
+                                    <span className="block text-gray-500 mb-1">Adres</span>
+                                    <textarea
+                                        value={editData.address || ''}
+                                        onChange={(e) => handleEditChange('address', e.target.value)}
+                                        disabled={updating}
+                                        rows={2}
+                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
+                                        placeholder="Adres bilgisi..."
+                                    />
+                                </div>
+                                <div className="col-span-2">
+                                    <span className="block text-gray-500 mb-1">Açıklama</span>
+                                    <textarea
+                                        value={editData.description || ''}
+                                        onChange={(e) => handleEditChange('description', e.target.value)}
+                                        disabled={updating}
+                                        rows={2}
+                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
+                                        placeholder="Notlar veya açıklama..."
+                                    />
+                                </div>
                             </div>
-                            <div>
-                                <span className="block text-gray-500 mb-1">Aşama</span>
-                                <span className={clsx("font-medium", customer.stage ? "text-indigo-600" : "text-gray-900")}>
-                                    {customer.stage || '-'}
-                                </span>
-                            </div>
-                            <div className="col-span-2">
-                                <span className="block text-gray-500 mb-1">Adres</span>
-                                <span className="text-gray-900">{customer.address || '-'}</span>
-                            </div>
-                            <div className="col-span-2">
-                                <span className="block text-gray-500 mb-1">Açıklama</span>
-                                <p className="text-gray-900">{customer.description || '-'}</p>
-                            </div>
+
+                            <button
+                                onClick={handleSaveInfo}
+                                disabled={updating}
+                                className="w-full bg-indigo-600 text-white py-2 rounded-lg font-semibold hover:bg-indigo-700 transition-colors disabled:opacity-50"
+                            >
+                                {updating ? 'Kaydediliyor...' : 'Bilgileri Kaydet'}
+                            </button>
                         </div>
                     </div>
 
@@ -251,7 +327,7 @@ const VisitModal: React.FC<{ customerId: string; onClose: () => void; onSuccess:
     const [loading, setLoading] = useState(false);
     const [useCurrentLocation, setUseCurrentLocation] = useState(false);
 
-    const onSubmit = async (data: CreateVisitDto) => {
+    const onSubmit = async (data: CreateVisitDto & { constructionType?: string; stage?: string }) => {
         try {
             setLoading(true);
             let lat, lng;
@@ -270,8 +346,17 @@ const VisitModal: React.FC<{ customerId: string; onClose: () => void; onSuccess:
                 }
             }
 
+            // Update customer details first if provided
+            if (data.constructionType || data.stage) {
+                await customerService.update(customerId, {
+                    constructionType: data.constructionType,
+                    stage: data.stage
+                });
+            }
+
+            const { constructionType, stage, ...visitData } = data;
             await visitService.create({
-                ...data,
+                ...visitData,
                 customerId,
                 latitude: lat,
                 longitude: lng
@@ -307,6 +392,38 @@ const VisitModal: React.FC<{ customerId: string; onClose: () => void; onSuccess:
                             className="w-full px-4 py-2 rounded-lg border border-gray-300 focus:ring-2 focus:ring-indigo-500 outline-none"
                             placeholder="Ziyaret detayı..."
                         />
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-3">
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 text-xs">İnşaat Türü</label>
+                            <select
+                                {...register('constructionType' as any)}
+                                className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm outline-none bg-white"
+                            >
+                                <option value="">Değiştirme</option>
+                                <option value="Müşteri">Müşteri</option>
+                                <option value="Konut">Konut</option>
+                                <option value="Ticari">Ticari</option>
+                                <option value="Devlet">Devlet</option>
+                                <option value="Diğer">Diğer</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label className="block text-sm font-medium text-gray-700 mb-1 text-xs">Aşama</label>
+                            <select
+                                {...register('stage' as any)}
+                                className="w-full px-3 py-1.5 rounded-lg border border-gray-300 text-sm outline-none bg-white"
+                            >
+                                <option value="">Değiştirme</option>
+                                <option value="Müşteri">Müşteri</option>
+                                <option value="Proje">Proje</option>
+                                <option value="Temel">Temel</option>
+                                <option value="Kaba İnşaat">Kaba İnşaat</option>
+                                <option value="İnce İşçilik">İnce İşçilik</option>
+                                <option value="Tamamlandı">Tamamlandı</option>
+                            </select>
+                        </div>
                     </div>
 
                     <div className="flex items-center space-x-2">

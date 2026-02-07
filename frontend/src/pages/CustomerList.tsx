@@ -154,9 +154,9 @@ const CustomerList: React.FC = () => {
                                 </div>
                                 <span
                                     className={clsx(
-                                        "px-2.5 py-1 rounded-full text-xs font-semibold uppercase tracking-wide",
+                                        "px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider",
                                         customer.stage
-                                            ? "bg-emerald-50 text-emerald-700 border border-emerald-100"
+                                            ? "bg-indigo-50 text-indigo-700 border border-indigo-100"
                                             : "bg-gray-50 text-gray-600 border border-gray-100"
                                     )}
                                 >
