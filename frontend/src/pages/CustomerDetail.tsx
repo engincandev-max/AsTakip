@@ -10,7 +10,7 @@ const CustomerDetail: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
     const [customer, setCustomer] = useState<Customer | null>(null);
-    const [editData, setEditData] = useState<{ constructionType?: string; stage?: string; description?: string; address?: string }>({});
+    const [editData, setEditData] = useState<{ name?: string; phoneNumber?: string; constructionType?: string; stage?: string; description?: string; address?: string }>({});
     const [loading, setLoading] = useState(true);
     const [updating, setUpdating] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -25,6 +25,8 @@ const CustomerDetail: React.FC = () => {
             const data = await customerService.getOne(customerId);
             setCustomer(data);
             setEditData({
+                name: data.name,
+                phoneNumber: data.phoneNumber,
                 constructionType: data.constructionType,
                 stage: data.stage,
                 description: data.description,
@@ -148,6 +150,26 @@ const CustomerDetail: React.FC = () => {
                         </div>
                         <div className="space-y-4">
                             <div className="grid grid-cols-2 gap-4 text-sm">
+                                <div className="col-span-2">
+                                    <label className="block text-gray-500 mb-1">Müşteri Adı</label>
+                                    <input
+                                        type="text"
+                                        value={editData.name || ''}
+                                        onChange={(e) => handleEditChange('name', e.target.value)}
+                                        disabled={updating}
+                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900 font-medium"
+                                    />
+                                </div>
+                                <div className="col-span-2">
+                                    <label className="block text-gray-500 mb-1">Telefon</label>
+                                    <input
+                                        type="text"
+                                        value={editData.phoneNumber || ''}
+                                        onChange={(e) => handleEditChange('phoneNumber', e.target.value)}
+                                        disabled={updating}
+                                        className="w-full bg-white border border-gray-200 rounded px-2 py-1.5 outline-none focus:ring-1 focus:ring-indigo-500 text-gray-900"
+                                    />
+                                </div>
                                 <div>
                                     <span className="block text-gray-500 mb-1">İnşaat Türü</span>
                                     <select
