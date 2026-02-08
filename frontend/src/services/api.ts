@@ -56,6 +56,10 @@ export const visitService = {
     delete: async (id: string) => {
         await api.delete(`/visits/${id}`);
     },
+    update: async (id: string, data: Partial<CreateVisitDto>) => {
+        const response = await api.patch<Visit>(`/visits/${id}`, data);
+        return response.data;
+    },
 };
 
 export const attachmentService = {

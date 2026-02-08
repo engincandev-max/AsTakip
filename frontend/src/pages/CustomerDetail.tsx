@@ -2,7 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useForm } from 'react-hook-form';
 import { customerService, visitService, attachmentService } from '../services/api';
-import type { Customer, CreateVisitDto, Attachment } from '../types';
+import type { Customer, CreateVisitDto, Attachment, Visit } from '../types';
 import MapComponent from '../components/MapComponent';
 import { Trash2, Upload, Loader2, FileText } from 'lucide-react';
 
@@ -16,6 +16,7 @@ const CustomerDetail: React.FC = () => {
     const [updating, setUpdating] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [isVisitModalOpen, setIsVisitModalOpen] = useState(false);
+    const [editingVisit, setEditingVisit] = useState<Visit | null>(null);
 
     useEffect(() => {
         if (id) loadCustomer(id);
@@ -114,6 +115,18 @@ const CustomerDetail: React.FC = () => {
         }
     };
 
+    const handleDeleteVisit = async (visitId: string) => {
+        if (window.confirm('Bu ziyareti silmek istediğinize emin misiniz?')) {
+            try {
+                await visitService.delete(visitId);
+                if (id) await loadCustomer(id);
+            } catch (error) {
+                console.error('Failed to delete visit:', error);
+                alert('Ziyaret silinemedi.');
+            }
+        }
+    };
+
     if (loading) return <div className="text-center py-10 text-gray-400">Yükleniyor...</div>;
     if (!customer) return null;
 
@@ -127,7 +140,10 @@ const CustomerDetail: React.FC = () => {
                 </div>
                 <div className="space-x-2">
                     <button
-                        onClick={() => setIsVisitModalOpen(true)}
+                        onClick={() => {
+                            setEditingVisit(null);
+                            setIsVisitModalOpen(true);
+                        }}
                         className="bg-indigo-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:bg-indigo-700 transition-colors shadow-sm"
                     >
                         + Ziyaret Ekle
@@ -330,11 +346,28 @@ const CustomerDetail: React.FC = () => {
                                 customer.visits.map((visit) => (
                                     <div key={visit.id} className="relative">
                                         <span className="absolute -left-[31px] top-1 h-4 w-4 rounded-full bg-indigo-100 border-2 border-indigo-600"></span>
-                                        <div className="bg-gray-50 p-3 rounded-lg">
+                                        <div className="bg-gray-50 p-3 rounded-lg group">
                                             <div className="flex justify-between items-center mb-1">
                                                 <span className="text-xs font-semibold text-indigo-600">
-                                                    {new Date(visit.date).toLocaleDateString('tr-TR')}
+                                                    {new Date(visit.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                 </span>
+                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <button
+                                                        onClick={() => {
+                                                            setEditingVisit(visit);
+                                                            setIsVisitModalOpen(true);
+                                                        }}
+                                                        className="p-1 text-gray-400 hover:text-indigo-600"
+                                                    >
+                                                        <FileText className="w-3.5 h-3.5" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleDeleteVisit(visit.id)}
+                                                        className="p-1 text-gray-400 hover:text-red-600"
+                                                    >
+                                                        <Trash2 className="w-3.5 h-3.5" />
+                                                    </button>
+                                                </div>
                                             </div>
                                             <p className="text-sm text-gray-700">{visit.note || 'Not girilmemiş.'}</p>
                                             {visit.latitude && visit.longitude && (
@@ -369,9 +402,14 @@ const CustomerDetail: React.FC = () => {
             {isVisitModalOpen && (
                 <VisitModal
                     customerId={customer.id}
-                    onClose={() => setIsVisitModalOpen(false)}
+                    editVisit={editingVisit}
+                    onClose={() => {
+                        setIsVisitModalOpen(false);
+                        setEditingVisit(null);
+                    }}
                     onSuccess={() => {
                         setIsVisitModalOpen(false);
+                        setEditingVisit(null);
                         if (id) loadCustomer(id);
                     }}
                 />
@@ -380,10 +418,17 @@ const CustomerDetail: React.FC = () => {
     );
 };
 
-const VisitModal: React.FC<{ customerId: string; onClose: () => void; onSuccess: () => void }> = ({ customerId, onClose, onSuccess }) => {
-    const { register, handleSubmit } = useForm<CreateVisitDto>();
+const VisitModal: React.FC<{ customerId: string; editVisit?: Visit | null; onClose: () => void; onSuccess: () => void }> = ({ customerId, editVisit, onClose, onSuccess }) => {
+    const { register, handleSubmit, setValue } = useForm<CreateVisitDto>();
     const [loading, setLoading] = useState(false);
     const [useCurrentLocation, setUseCurrentLocation] = useState(false);
+
+    useEffect(() => {
+        if (editVisit) {
+            setValue('date', new Date(editVisit.date).toISOString().slice(0, 16));
+            setValue('note', editVisit.note || '');
+        }
+    }, [editVisit, setValue]);
 
     const onSubmit = async (data: CreateVisitDto & { constructionType?: string; stage?: string }) => {
         try {
@@ -413,12 +458,21 @@ const VisitModal: React.FC<{ customerId: string; onClose: () => void; onSuccess:
             }
 
             const { constructionType, stage, ...visitData } = data;
-            await visitService.create({
-                ...visitData,
-                customerId,
-                latitude: lat,
-                longitude: lng
-            });
+
+            if (editVisit) {
+                await visitService.update(editVisit.id, {
+                    ...visitData,
+                    latitude: lat,
+                    longitude: lng
+                });
+            } else {
+                await visitService.create({
+                    ...visitData,
+                    customerId,
+                    latitude: lat,
+                    longitude: lng
+                });
+            }
             onSuccess();
         } catch (error) {
             console.error('Failed to add visit:', error);
@@ -430,8 +484,16 @@ const VisitModal: React.FC<{ customerId: string; onClose: () => void; onSuccess:
 
     return (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
-            <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 animate-fade-in">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">Yeni Ziyaret Ekle</h2>
+            <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-6 animate-fade-in relative">
+                <button
+                    onClick={onClose}
+                    className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+                >
+                    ✕
+                </button>
+                <h2 className="text-xl font-bold text-gray-900 mb-4">
+                    {editVisit ? 'Ziyareti Düzenle' : 'Yeni Ziyaret Ekle'}
+                </h2>
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
                     <div>
                         <label className="block text-sm font-medium text-gray-700 mb-1">Tarih</label>
