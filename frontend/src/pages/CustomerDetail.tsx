@@ -351,7 +351,7 @@ const CustomerDetail: React.FC = () => {
                                                 <span className="text-xs font-semibold text-indigo-600">
                                                     {new Date(visit.date).toLocaleDateString('tr-TR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
                                                 </span>
-                                                <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <div className="flex items-center gap-1">
                                                     <button
                                                         onClick={() => {
                                                             setEditingVisit(visit);
