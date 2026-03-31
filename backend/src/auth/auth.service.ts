@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { UsersService } from '../users/users.service';
 import * as bcrypt from 'bcrypt';
@@ -26,6 +26,18 @@ export class AuthService {
                 id: user.id,
                 username: user.username,
             },
+        };
+    }
+    async register(username: string, pass: string) {
+        const existing = await this.usersService.findOne(username);
+        if (existing) {
+            throw new ConflictException('Bu kullanıcı adı zaten kullanılıyor.');
+        }
+        const user = await this.usersService.create(username, pass);
+        const payload = { username: user.username, sub: user.id };
+        return {
+            access_token: this.jwtService.sign(payload),
+            user: { id: user.id, username: user.username },
         };
     }
 }

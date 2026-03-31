@@ -13,6 +13,15 @@ export class Customer {
   @Column()
   phoneNumber: string;
 
+  @Column('simple-array', { nullable: true })
+  additionalPhones: string[];
+
+  @Column('jsonb', { nullable: true, default: '[]' })
+  locations: { name: string; lat: number; lng: number }[];
+
+  @Column({ nullable: true })
+  createdByUsername: string;
+
   @Column({ nullable: true })
   constructionType: string;
 

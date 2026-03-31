@@ -1,24 +1,32 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, NotFoundException, OnModuleInit } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { Repository, IsNull } from 'typeorm';
 import { CreateCustomerDto } from './dto/create-customer.dto';
 import { UpdateCustomerDto } from './dto/update-customer.dto';
 import { Customer } from './entities/customer.entity';
 
 @Injectable()
-export class CustomersService {
+export class CustomersService implements OnModuleInit {
   constructor(
     @InjectRepository(Customer)
     private customersRepository: Repository<Customer>,
   ) { }
 
-  create(createCustomerDto: CreateCustomerDto) {
-    const customer = this.customersRepository.create(createCustomerDto);
+  async onModuleInit() {
+    // Eski müşteri kayıtlarında (null olanlarda) oluşturan kişiyi varsayılan 'admin' olarak ata
+    await this.customersRepository.update(
+      { createdByUsername: IsNull() },
+      { createdByUsername: 'admin' }
+    );
+  }
+
+  create(createCustomerDto: CreateCustomerDto, createdByUsername: string) {
+    const customer = this.customersRepository.create({ ...createCustomerDto, createdByUsername });
     return this.customersRepository.save(customer);
   }
 
   findAll() {
-    return this.customersRepository.find({ order: { createdAt: 'DESC' } });
+    return this.customersRepository.find({ order: { name: 'ASC' } });
   }
 
   findOne(id: string) {

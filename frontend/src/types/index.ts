@@ -8,6 +8,12 @@ export interface Visit {
     createdAt: string;
 }
 
+export interface LocationPin {
+    name: string;
+    lat: number;
+    lng: number;
+}
+
 export interface Attachment {
     id: number;
     filename: string;
@@ -20,6 +26,8 @@ export interface Customer {
     id: string;
     name: string;
     phoneNumber: string;
+    additionalPhones?: string[];
+    locations?: LocationPin[];
     constructionType?: string;
     stage?: string;
     description?: string;
@@ -27,6 +35,7 @@ export interface Customer {
     latitude?: number;
     longitude?: number;
     createdAt: string;
+    createdByUsername?: string;
     visits?: Visit[];
     attachments?: Attachment[];
 }
@@ -34,6 +43,8 @@ export interface Customer {
 export interface CreateCustomerDto {
     name: string;
     phoneNumber: string;
+    additionalPhones?: string[];
+    locations?: LocationPin[];
     constructionType?: string;
     stage?: string;
     description?: string;

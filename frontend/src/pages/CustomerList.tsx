@@ -191,9 +191,16 @@ const CustomerList: React.FC = () => {
 
                             <div className="mt-4 pt-4 border-t border-gray-50 flex items-center justify-between text-xs font-medium text-gray-400">
                                 <span>Kayıt: {new Date(customer.createdAt).toLocaleDateString()}</span>
-                                <span className="text-indigo-600 group-hover:translate-x-1 transition-transform">
-                                    Detaylar &rarr;
-                                </span>
+                                <div className="flex items-center gap-2">
+                                    {customer.createdByUsername && (
+                                        <span className="bg-indigo-50 text-indigo-500 px-2 py-0.5 rounded-full text-xs font-medium">
+                                            👤 {customer.createdByUsername}
+                                        </span>
+                                    )}
+                                    <span className="text-indigo-600 group-hover:translate-x-1 transition-transform">
+                                        Detaylar &rarr;
+                                    </span>
+                                </div>
                             </div>
                         </Link>
                     ))}

@@ -1,12 +1,20 @@
+import React from 'react';
 import { Bell, Search, Menu, LogOut } from 'lucide-react';
 import { useAuth } from '../../context/AuthContext';
+import { useNavigate } from 'react-router-dom';
 
 interface HeaderProps {
     onMenuClick?: () => void;
 }
 
 const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
-    const { logout } = useAuth();
+    const { logout, username } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = () => {
+        logout();
+        navigate('/login');
+    };
 
     return (
         <header className="sticky top-0 z-40 bg-white/80 backdrop-blur-md border-b border-gray-100 h-16 px-4 sm:px-6 lg:px-8 flex items-center justify-between">
@@ -18,7 +26,6 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                     <Menu className="w-5 h-5" />
                 </button>
 
-                {/* Search Bar - hidden on mobile for simplicity in this template */}
                 <div className="hidden md:flex items-center bg-gray-50 rounded-full px-4 py-1.5 border border-transparent focus-within:border-indigo-200 focus-within:bg-white transition-all w-64">
                     <Search className="w-4 h-4 text-gray-400" />
                     <input
@@ -36,14 +43,16 @@ const Header: React.FC<HeaderProps> = ({ onMenuClick }) => {
                 </button>
 
                 <button
-                    onClick={logout}
+                    onClick={handleLogout}
                     className="p-2 text-gray-400 hover:text-red-600 transition-colors flex items-center gap-2"
                     title="Çıkış Yap"
                 >
                     <LogOut className="w-5 h-5" />
                 </button>
 
-                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 ring-2 ring-white shadow-sm cursor-pointer"></div>
+                <div className="w-8 h-8 rounded-full bg-gradient-to-br from-indigo-500 to-purple-500 ring-2 ring-white shadow-sm flex items-center justify-center text-white text-xs font-bold">
+                    {username ? username.charAt(0).toUpperCase() : '?'}
+                </div>
             </div>
         </header>
     );

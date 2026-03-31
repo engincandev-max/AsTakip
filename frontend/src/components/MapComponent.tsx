@@ -1,4 +1,4 @@
-import React, { useCallback, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { GoogleMap, useJsApiLoader, Marker } from '@react-google-maps/api';
 
 const containerStyle = {
@@ -8,8 +8,8 @@ const containerStyle = {
 };
 
 const defaultCenter = {
-    lat: 41.0082, // Istanbul
-    lng: 28.9784,
+    lat: 36.8969, // Antalya
+    lng: 30.7133,
 };
 
 interface MapComponentProps {
@@ -26,15 +26,31 @@ const MapComponent: React.FC<MapComponentProps> = ({ onLocationSelect, initialLo
         googleMapsApiKey: import.meta.env.VITE_GOOGLE_MAPS_API_KEY || '',
     });
 
-    const [, setMap] = useState<google.maps.Map | null>(null);
+    const mapRef = useRef<google.maps.Map | null>(null);
     const [marker, setMarker] = useState<{ lat: number; lng: number } | null>(initialLocation || null);
 
+    // Pan to new location whenever initialLocation changes (e.g., GPS arrives after mount)
+    useEffect(() => {
+        if (initialLocation) {
+            setMarker(initialLocation);
+            if (mapRef.current) {
+                mapRef.current.panTo(initialLocation);
+                mapRef.current.setZoom(15);
+            }
+        }
+    }, [initialLocation]);
+
     const onLoad = useCallback(function callback(map: google.maps.Map) {
-        setMap(map);
-    }, []);
+        mapRef.current = map;
+        // If GPS location is already available when map loads, zoom in immediately
+        if (initialLocation) {
+            map.panTo(initialLocation);
+            map.setZoom(15);
+        }
+    }, [initialLocation]);
 
     const onUnmount = useCallback(function callback() {
-        setMap(null);
+        mapRef.current = null;
     }, []);
 
     const handleMapClick = (e: google.maps.MapMouseEvent) => {
@@ -59,7 +75,7 @@ const MapComponent: React.FC<MapComponentProps> = ({ onLocationSelect, initialLo
         <GoogleMap
             mapContainerStyle={containerStyle}
             center={marker || defaultCenter}
-            zoom={12}
+            zoom={marker ? 15 : 12}
             onLoad={onLoad}
             onUnmount={onUnmount}
             onClick={handleMapClick}
